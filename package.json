@@ -1,0 +1,47 @@
+{
+  "name": "@adiasg/dev-overlay",
+  "version": "0.1.0",
+  "private": false,
+  "description": "React developer overlay for quickly making annotated screenshots",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./client.js",
+      "require": "./dist/index.cjs",
+      "default": "./client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "client.js"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@radix-ui/react-tooltip": "^1.1.2",
+    "html-to-image": "^1.11.11",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "tsup": "^8",
+    "rimraf": "^5.0.7"
+  },
+  "publishConfig": { "access": "public" }
+}

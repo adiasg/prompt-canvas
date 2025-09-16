@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Environment files
+.env
+
+# Editor
+.cursor/
+
+# Packed tarballs
+*.tgz

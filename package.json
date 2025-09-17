@@ -1,6 +1,6 @@
 {
   "name": "prompt-canvas",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "description": "Visual prompts for coding agents directly from your frontend",
   "license": "MIT",

@@ -35,7 +35,7 @@ type MoveTextAction = {
 };
 type Action = StrokeAction | TextAddAction | MoveTextAction;
 
-export type DevOverlayProps = {
+export type PromptCanvasProps = {
   strokeColor?: string;
   strokeWidth?: number;
   textSize?: number;
@@ -44,9 +44,9 @@ export type DevOverlayProps = {
   onNotify?: (title: string, opts?: { description?: string; variant?: 'info' | 'success' | 'error' }) => void;
 };
 
-const OVERLAY_STORAGE_KEY = 'dev-overlay:visible';
+const OVERLAY_STORAGE_KEY = 'prompt-canvas:visible';
 
-export function DevOverlay(props: DevOverlayProps) {
+export function PromptCanvas(props: PromptCanvasProps) {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
@@ -136,28 +136,28 @@ export function DevOverlay(props: DevOverlayProps) {
   // Inject minimal CSS to emulate shadcn-like buttons without requiring Tailwind
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const STYLE_ID = 'do-injected-styles';
+    const STYLE_ID = 'pc-injected-styles';
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .do-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:inherit;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .05s ease}
-      .do-btn:disabled{opacity:.45;cursor:not-allowed}
-      .do-btn:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(0,0,0,.75)}
-      .do-variant-ghost{background:transparent}
-      .do-variant-ghost:hover{background:rgba(0,0,0,.05)}
-      .do-variant-outline{background:#fff;border:1px solid rgba(0,0,0,.12)}
-      .do-variant-outline:hover{background:#fff;border-color:rgba(0,0,0,.18)}
-      .do-variant-default{background:#111827;color:#fff;border-color:transparent}
-      .do-variant-default:hover{background:#0b1220}
-      .do-active{background:#111827;color:#fff}
-      .do-active:hover{background:#111827}
-      .do-size-icon{height:36px;width:36px}
-      .do-size-icon-lg{height:40px;width:40px}
-      .do-size-fab{height:48px;width:48px}
-      .do-size-36{height:36px}
-      .do-rounded-full{border-radius:999px}
-      .do-shadow{box-shadow:0 6px 20px rgba(0,0,0,.15)}
+      .pc-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:inherit;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .05s ease}
+      .pc-btn:disabled{opacity:.45;cursor:not-allowed}
+      .pc-btn:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(0,0,0,.75)}
+      .pc-variant-ghost{background:transparent}
+      .pc-variant-ghost:hover{background:rgba(0,0,0,.05)}
+      .pc-variant-outline{background:#fff;border:1px solid rgba(0,0,0,.12)}
+      .pc-variant-outline:hover{background:#fff;border-color:rgba(0,0,0,.18)}
+      .pc-variant-default{background:#111827;color:#fff;border-color:transparent}
+      .pc-variant-default:hover{background:#0b1220}
+      .pc-active{background:#111827;color:#fff}
+      .pc-active:hover{background:#111827}
+      .pc-size-icon{height:36px;width:36px}
+      .pc-size-icon-lg{height:40px;width:40px}
+      .pc-size-fab{height:48px;width:48px}
+      .pc-size-36{height:36px}
+      .pc-rounded-full{border-radius:999px}
+      .pc-shadow{box-shadow:0 6px 20px rgba(0,0,0,.15)}
     `;
     document.head.appendChild(style);
     return () => {
@@ -270,7 +270,7 @@ export function DevOverlay(props: DevOverlayProps) {
       node.closest('[data-radix-popper-content-wrapper]')
     )
       return true;
-    if (node.hasAttribute('data-dev-overlay-notifier') || node.closest('[data-dev-overlay-notifier]')) return true;
+    if (node.hasAttribute('data-prompt-canvas-notifier') || node.closest('[data-prompt-canvas-notifier]')) return true;
     return false;
   };
 
@@ -860,7 +860,7 @@ export function DevOverlay(props: DevOverlayProps) {
               style={{
                 color: '#000',
               }}
-              className="do-btn do-variant-outline do-size-fab do-rounded-full do-shadow"
+              className="pc-btn pc-variant-outline pc-size-fab pc-rounded-full pc-shadow"
               title="Open overlay"
             >
               <Pen size={20} strokeWidth={2.25} />
@@ -892,7 +892,7 @@ export function DevOverlay(props: DevOverlayProps) {
                       onClick={() => setActiveTool((t) => (t === 'pen' ? 'none' : 'pen'))}
                       style={{ ...toolbarButtonStyle, ...(activeTool === 'pen' ? toolbarButtonActiveStyle : null) }}
                       aria-label="Pen"
-                      className={`do-btn do-variant-ghost do-size-icon ${activeTool === 'pen' ? 'do-active' : ''}`}
+                      className={`pc-btn pc-variant-ghost pc-size-icon ${activeTool === 'pen' ? 'pc-active' : ''}`}
                     >
                       <Pen size={16} />
                     </button>
@@ -911,7 +911,7 @@ export function DevOverlay(props: DevOverlayProps) {
                       onClick={() => setActiveTool((t) => (t === 'text' ? 'none' : 'text'))}
                       style={{ ...toolbarButtonStyle, ...(activeTool === 'text' ? toolbarButtonActiveStyle : null) }}
                       aria-label="Text"
-                      className={`do-btn do-variant-ghost do-size-icon ${activeTool === 'text' ? 'do-active' : ''}`}
+                      className={`pc-btn pc-variant-ghost pc-size-icon ${activeTool === 'text' ? 'pc-active' : ''}`}
                     >
                       <Type size={16} />
                     </button>
@@ -930,7 +930,7 @@ export function DevOverlay(props: DevOverlayProps) {
                       onClick={() => setActiveTool((t) => (t === 'erase' ? 'none' : 'erase'))}
                       style={{ ...toolbarButtonStyle, ...(activeTool === 'erase' ? toolbarButtonActiveStyle : null) }}
                       aria-label="Eraser"
-                      className={`do-btn do-variant-ghost do-size-icon ${activeTool === 'erase' ? 'do-active' : ''}`}
+                      className={`pc-btn pc-variant-ghost pc-size-icon ${activeTool === 'erase' ? 'pc-active' : ''}`}
                     >
                       <Eraser size={16} />
                     </button>
@@ -949,7 +949,7 @@ export function DevOverlay(props: DevOverlayProps) {
               <Tooltip.Provider delayDuration={200}>
                 <Tooltip.Root>
                   <Tooltip.Trigger asChild>
-                    <button onClick={undo} disabled={!canUndo} style={{ ...toolbarButtonStyle, opacity: canUndo ? 1 : 0.4 }} aria-label="Undo" className={`do-btn do-variant-ghost do-size-icon ${canUndo ? '' : ''}`}>
+                    <button onClick={undo} disabled={!canUndo} style={{ ...toolbarButtonStyle, opacity: canUndo ? 1 : 0.4 }} aria-label="Undo" className={`pc-btn pc-variant-ghost pc-size-icon ${canUndo ? '' : ''}`}>
                       <Undo2 size={16} />
                     </button>
                   </Tooltip.Trigger>
@@ -959,7 +959,7 @@ export function DevOverlay(props: DevOverlayProps) {
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger asChild>
-                    <button onClick={redo} disabled={!canRedo} style={{ ...toolbarButtonStyle, opacity: canRedo ? 1 : 0.4 }} aria-label="Redo" className={`do-btn do-variant-ghost do-size-icon ${canRedo ? '' : ''}`}>
+                    <button onClick={redo} disabled={!canRedo} style={{ ...toolbarButtonStyle, opacity: canRedo ? 1 : 0.4 }} aria-label="Redo" className={`pc-btn pc-variant-ghost pc-size-icon ${canRedo ? '' : ''}`}>
                       <Redo2 size={16} />
                     </button>
                   </Tooltip.Trigger>
@@ -974,7 +974,7 @@ export function DevOverlay(props: DevOverlayProps) {
               <Tooltip.Provider delayDuration={200}>
                 <Tooltip.Root>
                   <Tooltip.Trigger asChild>
-                    <button onClick={handleCopyToClipboard} style={toolbarButtonStyle} aria-label="Copy screenshot" className="do-btn do-variant-ghost do-size-icon">
+                    <button onClick={handleCopyToClipboard} style={toolbarButtonStyle} aria-label="Copy screenshot" className="pc-btn pc-variant-ghost pc-size-icon">
                       <Copy size={16} />
                     </button>
                   </Tooltip.Trigger>
@@ -984,7 +984,7 @@ export function DevOverlay(props: DevOverlayProps) {
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger asChild>
-                    <button onClick={handleScreenshot} style={toolbarButtonStyle} aria-label="Save screenshot" className="do-btn do-variant-ghost do-size-icon">
+                    <button onClick={handleScreenshot} style={toolbarButtonStyle} aria-label="Save screenshot" className="pc-btn pc-variant-ghost pc-size-icon">
                       <Camera size={16} />
                     </button>
                   </Tooltip.Trigger>
@@ -993,14 +993,14 @@ export function DevOverlay(props: DevOverlayProps) {
                   </Tooltip.Portal>
                 </Tooltip.Root>
               </Tooltip.Provider>
-              <button onClick={clearCanvas} title="Clear" style={{ ...toolbarButtonStyle, paddingInline: 8, width: 'auto' }} className="do-btn do-variant-ghost do-size-36">
+              <button onClick={clearCanvas} title="Clear" style={{ ...toolbarButtonStyle, paddingInline: 8, width: 'auto' }} className="pc-btn pc-variant-ghost pc-size-36">
                 Clear
               </button>
               <button
                 aria-label="Close overlay toolbar"
                 onClick={() => setIsDockOpen(false)}
                 title="Close"
-                className="do-btn do-variant-outline do-size-icon-lg do-rounded-full"
+                className="pc-btn pc-variant-outline pc-size-icon-lg pc-rounded-full"
               >
                 <X size={18} />
               </button>
@@ -1013,7 +1013,7 @@ export function DevOverlay(props: DevOverlayProps) {
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            data-dev-overlay-notifier
+            data-prompt-canvas-notifier
             role="status"
             aria-live="polite"
             style={{

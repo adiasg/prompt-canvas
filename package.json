@@ -1,8 +1,8 @@
 {
-  "name": "@adiasg/dev-overlay",
-  "version": "0.1.0",
+  "name": "prompt-canvas",
+  "version": "0.0.1",
   "private": false,
-  "description": "React developer overlay for quickly making annotated screenshots",
+  "description": "Visual prompts for coding agents directly from your frontend",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

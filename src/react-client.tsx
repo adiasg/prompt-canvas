@@ -1,5 +1,5 @@
 'use client';
 
-export { DevOverlay } from './ui/dev-overlay';
+export { PromptCanvas } from './ui/prompt-canvas';
 
 

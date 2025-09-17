@@ -1,11 +1,16 @@
 {
   "name": "prompt-canvas",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": false,
   "description": "Visual prompts for coding agents directly from your frontend",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/adiasg/prompt-canvas.git" },
-  "bugs": { "url": "https://github.com/adiasg/prompt-canvas/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adiasg/prompt-canvas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adiasg/prompt-canvas/issues"
+  },
   "homepage": "https://github.com/adiasg/prompt-canvas#readme",
   "type": "module",
   "sideEffects": false,
@@ -46,5 +51,7 @@
     "tsup": "^8",
     "rimraf": "^5.0.7"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

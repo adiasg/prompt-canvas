@@ -1,7 +1,8 @@
 # prompt-canvas
 
+Visual prompts for coding agents directly from your frontend. A React component for annotating changes & sending them to coding agents.
 
-Visual prompts for coding agents directly from your frontend. This repo provides a React component for easily annotating changes & sending them to coding agents.
+![Prompt Canvas Demo](assets/prompt-canvas-quick-demo.gif)
 
 ## Install
 
@@ -21,6 +22,15 @@ import { PromptCanvas } from 'prompt-canvas';
 // ...
 ```
 
-## Features
-- Drawable canvas with annotation tools.
-- Tool shortcuts: P (Pen), T (Text), E (Eraser), C (Copy screenshot), ⌘Z / ⌘⇧Z (Undo/Redo).
+Then, run the dev server `npm run dev` and open the web app in the browser.  
+**Supported browsers:** Chrome, Firefox. 
+
+## Keyboard Shortcuts
+
+| Shortcut         | Tool              |
+|------------------|-------------------|
+| P                | Pen               |
+| T                | Text              |
+| E                | Eraser            |
+| C                | Copy screenshot   |
+| ⌘Z / ⌘⇧Z         | Undo / Redo       |

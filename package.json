@@ -47,11 +47,12 @@
   "devDependencies": {
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5",
+    "rimraf": "^5.0.7",
     "tsup": "^8",
-    "rimraf": "^5.0.7"
+    "typescript": "^5"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": "[\"react\",\"nextjs\",\"canvas\",\"annotation\",\"screenshot\",\"prompt\",\"ai\",\"agent\",\"devtools\",\"overlay\"]"
 }

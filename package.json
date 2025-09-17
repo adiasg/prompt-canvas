@@ -53,6 +53,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "keywords": "[\"react\",\"nextjs\",\"canvas\",\"annotation\",\"screenshot\",\"prompt\",\"ai\",\"agent\",\"devtools\",\"overlay\"]"
+  }
 }

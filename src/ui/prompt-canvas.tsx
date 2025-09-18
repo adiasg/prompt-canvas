@@ -133,6 +133,20 @@ export function PromptCanvas(props: PromptCanvasProps) {
     window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== item.id)), item.durationMs);
   };
 
+  // Detect Safari (exclude Chrome/Chromium/Edge/Opera/Android). On iOS many UAs include Safari; this heuristically targets Safari proper.
+  const isSafari = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent;
+    return /Safari/i.test(ua) && !/Chrome|Chromium|Edg|OPR|Android/i.test(ua);
+  }, []);
+
+  // If user opens toolbar on Safari, inform about unsupported clipboard copy
+  useEffect(() => {
+    if (isDockOpen && isVisible && isSafari) {
+      notify('Try in Chrome or Firefox. Safari not supported. ', { variant: 'error' });
+    }
+  }, [isDockOpen, isVisible, isSafari]);
+
   // Inject minimal CSS to emulate shadcn-like buttons without requiring Tailwind
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -688,7 +702,8 @@ export function PromptCanvas(props: PromptCanvasProps) {
     } catch {
       // ignore
     }
-    notify('Copy failed. Please allow clipboard permissions.', { variant: 'error' });
+    const msg = isSafari ? 'Try in Chrome or Firefox. Safari not supported. ' : 'Copy failed. Please allow clipboard permissions.';
+    notify(msg, { variant: 'error' });
   };
 
   const undo = () => {

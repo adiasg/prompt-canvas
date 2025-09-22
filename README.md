@@ -1,5 +1,6 @@
 # prompt-canvas
 
+![NPM Downloads](https://img.shields.io/npm/dw/prompt-canvas)
 ![GitHub Repo stars](https://img.shields.io/github/stars/adiasg/prompt-canvas)
 
 Visual prompts for coding agents directly from your frontend. A React component for annotating changes & sending them to coding agents.

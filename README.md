@@ -9,7 +9,10 @@ Visual prompts for coding agents directly from your frontend. A React component 
 
 ## Quickstart
 
-[![Install prompt-canvas](https://cursor.com/deeplink/mcp-install-dark.svg)](cursor://anysphere.cursor-deeplink/prompt?text=Install%20prompt-canvas%2C%20a%20developer%20overlay%20for%20drawing%20on%20the%20frontend.%20Look%20up%20the%20latest%20package%20documentation%20for%20installation%20instructions.%20Here%20are%20basic%20details%3A%20First%2C%20install%20the%20component%20using%20%60npm%20install%20prompt-canvas%60.%20Then%2C%20place%20the%20React%20component%20PromptCanvas%20in%20the%20top-level%20layout%20of%20my%20NextJS%20application.%20Use%20this%20named%20import%3A%20%60import%20%7B%20PromptCanvas%20%7D%20from%20'prompt-canvas'%60.)
+Installation prompt:
+```
+Install prompt-canvas, a developer overlay for drawing on the frontend. Look up instructions in the repo README: https://github.com/adiasg/prompt-canvas.
+```
 
 ### Install
 

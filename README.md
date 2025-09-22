@@ -32,7 +32,8 @@ Then, run the dev server `npm run dev` and open the web app in the browser.
 | Shortcut         | Tool              |
 |------------------|-------------------|
 | P                | Pen               |
+| B                | Box               |
 | T                | Text              |
 | E                | Eraser            |
-| C                | Copy screenshot   |
+| ⌘C               | Copy screenshot   |
 | ⌘Z / ⌘⇧Z         | Undo / Redo       |

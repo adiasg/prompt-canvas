@@ -3,10 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
-import { Camera, Copy, Eraser, Eye, EyeOff, Pen, Redo2, Type, Undo2, X } from 'lucide-react';
+import { Camera, Copy, Eraser, Eye, EyeOff, Pen, Redo2, Square, Type, Undo2, X } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 
-type Tool = 'none' | 'pen' | 'text' | 'erase';
+type Tool = 'none' | 'pen' | 'text' | 'erase' | 'box';
 
 type StrokePoint = { x: number; y: number };
 type StrokeAction = {
@@ -33,7 +33,16 @@ type MoveTextAction = {
   from: { x: number; y: number };
   to: { x: number; y: number };
 };
-type Action = StrokeAction | TextAddAction | MoveTextAction;
+type RectAction = {
+  type: 'rect';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+  width: number;
+};
+type Action = StrokeAction | TextAddAction | MoveTextAction | RectAction;
 
 export type PromptCanvasProps = {
   strokeColor?: string;
@@ -78,6 +87,19 @@ export function PromptCanvas(props: PromptCanvasProps) {
   const [canUndo, setCanUndo] = useState<boolean>(false);
   const [canRedo, setCanRedo] = useState<boolean>(false);
   const nextTextIdRef = useRef<number>(1);
+  const editingTextRef = useRef<TextAddAction | null>(null);
+  const textCommitGuardRef = useRef<boolean>(false);
+  const currentRectRef = useRef<
+    | {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        color: string;
+        width: number;
+      }
+    | null
+  >(null);
 
   const draggingTextRef = useRef<
     | {
@@ -363,6 +385,8 @@ export function PromptCanvas(props: PromptCanvasProps) {
       } else if (action.type === 'text') {
         const t = finalTextMap.get(action.id);
         if (!t) continue;
+        // If currently editing this text, hide the original to avoid double rendering
+        if (editingTextRef.current && editingTextRef.current.id === action.id) continue;
         ctx.save();
         ctx.font = `${t.size}px ui-sans-serif, system-ui, -apple-system`;
         ctx.fillStyle = t.color;
@@ -370,6 +394,15 @@ export function PromptCanvas(props: PromptCanvasProps) {
         const lines = t.value.split(/\n/);
         const lineHeight = Math.round(t.size * 1.3);
         for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i] ?? '', t.x, t.y + i * lineHeight);
+        ctx.restore();
+      } else if (action.type === 'rect') {
+        ctx.save();
+        ctx.lineCap = 'square';
+        ctx.lineJoin = 'miter';
+        ctx.strokeStyle = action.color;
+        ctx.lineWidth = action.width;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeRect(action.x, action.y, action.w, action.h);
         ctx.restore();
       }
     }
@@ -388,6 +421,24 @@ export function PromptCanvas(props: PromptCanvasProps) {
       for (const p of rest) ctx.lineTo(p.x, p.y);
       ctx.stroke();
       ctx.restore();
+    }
+
+    if (currentRectRef.current) {
+      const r = currentRectRef.current;
+      const x = Math.min(r.x1, r.x2);
+      const y = Math.min(r.y1, r.y2);
+      const w = Math.abs(r.x2 - r.x1);
+      const h = Math.abs(r.y2 - r.y1);
+      if (w > 0 && h > 0) {
+        ctx.save();
+        ctx.lineCap = 'square';
+        ctx.lineJoin = 'miter';
+        ctx.strokeStyle = r.color;
+        ctx.lineWidth = r.width;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeRect(x, y, w, h);
+        ctx.restore();
+      }
     }
   };
 
@@ -440,6 +491,13 @@ export function PromptCanvas(props: PromptCanvasProps) {
       return;
     }
 
+    if (activeTool === 'box') {
+      setIsHoveringText(false);
+      currentRectRef.current = { x1: x, y1: y, x2: x, y2: y, color: strokeColor, width: strokeWidth };
+      renderScene();
+      return;
+    }
+
     isDrawingRef.current = true;
     setIsHoveringText(false);
     currentStrokeRef.current = {
@@ -462,6 +520,14 @@ export function PromptCanvas(props: PromptCanvasProps) {
       draggingTextRef.current.currentX = x - draggingTextRef.current.offsetX;
       draggingTextRef.current.currentY = y - draggingTextRef.current.offsetY;
       didDragRef.current = true;
+      renderScene();
+      return;
+    }
+
+    // update rectangle preview while dragging
+    if (activeTool === 'box' && currentRectRef.current) {
+      currentRectRef.current.x2 = x;
+      currentRectRef.current.y2 = y;
       renderScene();
       return;
     }
@@ -498,6 +564,21 @@ export function PromptCanvas(props: PromptCanvasProps) {
       renderScene();
       return;
     }
+    if (currentRectRef.current && activeTool === 'box') {
+      const r = currentRectRef.current;
+      const rx = Math.min(r.x1, r.x2);
+      const ry = Math.min(r.y1, r.y2);
+      const rw = Math.abs(r.x2 - r.x1);
+      const rh = Math.abs(r.y2 - r.y1);
+      if (rw > 0 && rh > 0) {
+        historyRef.current.push({ type: 'rect', x: rx, y: ry, w: rw, h: rh, color: r.color, width: r.width });
+        redoRef.current = [];
+        updateUndoRedoState();
+      }
+      currentRectRef.current = null;
+      renderScene();
+      return;
+    }
     if (isDrawingRef.current && currentStrokeRef.current) {
       if (currentStrokeRef.current.points.length > 1) {
         historyRef.current.push(currentStrokeRef.current);
@@ -519,11 +600,29 @@ export function PromptCanvas(props: PromptCanvasProps) {
     const onMouseLeave = () => {
       if (!draggingTextRef.current) setIsHoveringText(false);
     };
+    const onDblClick = (e: MouseEvent) => {
+      if (!(isDockOpen && isVisible)) return;
+      const { x, y } = getPointerPos(e);
+      const texts = Array.from(computeFinalTextMap().values());
+      for (let i = texts.length - 1; i >= 0; i--) {
+        const t = texts[i]!;
+        if (isPointInText(x, y, t)) {
+          editingTextRef.current = t;
+          setTextBoxPos({ x: Math.round(t.x), y: Math.round(t.y) });
+          setTextBoxValue(t.value);
+          textCommitGuardRef.current = false;
+          setIsTextBoxVisible(true);
+          renderScene();
+          break;
+        }
+      }
+    };
     const onTouchStart = (e: TouchEvent) => handlePointerDown(e);
     const onTouchMove = (e: TouchEvent) => handlePointerMove(e);
     const onTouchEnd = () => handlePointerUp();
 
     canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('dblclick', onDblClick);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mouseleave', onMouseLeave);
@@ -532,6 +631,7 @@ export function PromptCanvas(props: PromptCanvasProps) {
     window.addEventListener('touchend', onTouchEnd);
     return () => {
       canvas.removeEventListener('mousedown', onMouseDown);
+      canvas.removeEventListener('dblclick', onDblClick);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('mouseleave', onMouseLeave);
@@ -552,32 +652,43 @@ export function PromptCanvas(props: PromptCanvasProps) {
         return;
       }
       const { x, y } = getPointerPos(e);
-      setTextBoxPos({ x, y });
+      setTextBoxPos({ x: Math.round(x), y: Math.round(y) });
       setTextBoxValue('');
+      editingTextRef.current = null;
+      textCommitGuardRef.current = false;
       setIsTextBoxVisible(true);
     };
     canvas.addEventListener('click', onClick);
     return () => canvas.removeEventListener('click', onClick);
   }, [activeTool, isVisible, strokeColor, textSize, isDockOpen]);
 
+  // remove old two-click box handler (replaced by drag-to-draw)
+
   useEffect(() => {
     if (isTextBoxVisible) {
       const id = window.requestAnimationFrame(() => textAreaRef.current?.focus());
+      textCommitGuardRef.current = false;
       return () => window.cancelAnimationFrame(id);
     }
   }, [isTextBoxVisible]);
 
-  const commitTextToCanvas = (value: string, position: { x: number; y: number }) => {
+  const commitTextToCanvas = (
+    value: string,
+    position: { x: number; y: number },
+    existing?: { id: number; size: number; color: string }
+  ) => {
     if (!value.trim()) return;
-    const measured = measureTextBlock(value, textSize);
+    const sizeToUse = existing?.size ?? textSize;
+    const colorToUse = existing?.color ?? strokeColor;
+    const measured = measureTextBlock(value, sizeToUse);
     const action: TextAddAction = {
       type: 'text',
-      id: nextTextIdRef.current++,
+      id: existing?.id ?? nextTextIdRef.current++,
       value,
-      x: position.x,
-      y: position.y,
-      size: textSize,
-      color: strokeColor,
+      x: Math.round(position.x),
+      y: Math.round(position.y),
+      size: sizeToUse,
+      color: colorToUse,
       w: measured.width,
       h: measured.height,
     };
@@ -750,16 +861,21 @@ export function PromptCanvas(props: PromptCanvasProps) {
           setActiveTool('erase');
           return;
         }
-        if (key === 'c') {
+        if (key === 'b') {
           e.preventDefault();
-          // Copy screenshot
-          void handleCopyToClipboard();
+          setActiveTool('box');
           return;
         }
       }
       // Undo/redo with Meta/Ctrl
       const isMeta = e.metaKey || e.ctrlKey;
       if (!isMeta) return;
+      if (key === 'c') {
+        e.preventDefault();
+        // Copy screenshot
+        void handleCopyToClipboard();
+        return;
+      }
       if (key === 'z') {
         e.preventDefault();
         if (e.shiftKey) redo();
@@ -785,7 +901,7 @@ export function PromptCanvas(props: PromptCanvasProps) {
     ? 'grab'
     : activeTool === 'text'
     ? 'text'
-    : activeTool === 'pen' || activeTool === 'erase'
+    : activeTool === 'pen' || activeTool === 'erase' || activeTool === 'box'
     ? 'crosshair'
     : 'default';
   const canvasPointerEvents = isDockOpen && activeTool !== 'none' ? 'auto' : 'none';
@@ -821,26 +937,55 @@ export function PromptCanvas(props: PromptCanvasProps) {
         />
 
         {/* floating text box */}
-        {isDockOpen && activeTool === 'text' && isTextBoxVisible && (
+        {isDockOpen && isTextBoxVisible && (
           <textarea
             ref={textAreaRef}
-            placeholder="⌘+Enter to finish"
             value={textBoxValue}
             onChange={(e) => setTextBoxValue(e.target.value)}
             onBlur={() => {
-              commitTextToCanvas(textBoxValue, textBoxPos);
+              if (textCommitGuardRef.current) return;
+              textCommitGuardRef.current = true;
+              if (editingTextRef.current) {
+                commitTextToCanvas(textBoxValue, { x: Math.round(editingTextRef.current.x), y: Math.round(editingTextRef.current.y) }, {
+                  id: editingTextRef.current.id,
+                  size: editingTextRef.current.size,
+                  color: editingTextRef.current.color,
+                });
+              } else {
+                commitTextToCanvas(textBoxValue, { x: Math.round(textBoxPos.x), y: Math.round(textBoxPos.y) });
+              }
               closeTextBox();
+              editingTextRef.current = null;
+              textCommitGuardRef.current = false;
+              renderScene();
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                commitTextToCanvas(textBoxValue, textBoxPos);
+                if (!textCommitGuardRef.current) {
+                  textCommitGuardRef.current = true;
+                  if (editingTextRef.current) {
+                    commitTextToCanvas(textBoxValue, { x: Math.round(editingTextRef.current.x), y: Math.round(editingTextRef.current.y) }, {
+                      id: editingTextRef.current.id,
+                      size: editingTextRef.current.size,
+                      color: editingTextRef.current.color,
+                    });
+                  } else {
+                    commitTextToCanvas(textBoxValue, { x: Math.round(textBoxPos.x), y: Math.round(textBoxPos.y) });
+                  }
+                }
                 closeTextBox();
+                editingTextRef.current = null;
+                textCommitGuardRef.current = false;
+                renderScene();
               }
               if (e.key === 'Escape') {
                 e.preventDefault();
                 closeTextBox();
                 setIsHoveringText(false);
+                editingTextRef.current = null;
+                textCommitGuardRef.current = false;
+                renderScene();
               }
             }}
             style={{
@@ -848,17 +993,21 @@ export function PromptCanvas(props: PromptCanvasProps) {
               left: textBoxPos.x,
               top: textBoxPos.y,
               zIndex: 2147483646,
-              minHeight: 32,
-              minWidth: 96,
+              width: `${Math.max(1, measureTextBlock(textBoxValue || ' ', editingTextRef.current?.size ?? textSize).width)}px`,
+              height: `${Math.max(1, measureTextBlock(textBoxValue || ' ', editingTextRef.current?.size ?? textSize).height)}px`,
               resize: 'none',
-              borderRadius: 8,
-              background: 'rgba(255,255,255,0.9)',
-              color: '#000',
-              padding: 6,
-              fontSize: 14,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+              background: 'transparent',
+              color: editingTextRef.current?.color ?? strokeColor,
+              padding: 0,
+              margin: 0,
+              fontSize: editingTextRef.current?.size ?? textSize,
+              fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+              lineHeight: `${Math.round((editingTextRef.current?.size ?? textSize) * 1.3)}px`,
+              boxShadow: 'none',
               outline: 'none',
-              border: '1px solid rgba(0,0,0,0.12)',
+              border: 'none',
+              overflow: 'hidden',
+              whiteSpace: 'pre',
             }}
           />
         )}
@@ -915,6 +1064,25 @@ export function PromptCanvas(props: PromptCanvasProps) {
                   <Tooltip.Portal>
                     <Tooltip.Content sideOffset={8} style={{ background: '#111827', color: 'white', padding: '6px 8px', borderRadius: 6, fontSize: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}>
                       Pen (P)
+                      <Tooltip.Arrow width={10} height={5} style={{ fill: '#111827' }} />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <button
+                      onClick={() => setActiveTool((t) => (t === 'box' ? 'none' : 'box'))}
+                      style={{ ...toolbarButtonStyle, ...(activeTool === 'box' ? toolbarButtonActiveStyle : null) }}
+                      aria-label="Box"
+                      className={`pc-btn pc-variant-ghost pc-size-icon ${activeTool === 'box' ? 'pc-active' : ''}`}
+                    >
+                      <Square size={16} />
+                    </button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content sideOffset={8} style={{ background: '#111827', color: 'white', padding: '6px 8px', borderRadius: 6, fontSize: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}>
+                      Box (B)
                       <Tooltip.Arrow width={10} height={5} style={{ fill: '#111827' }} />
                     </Tooltip.Content>
                   </Tooltip.Portal>
@@ -994,7 +1162,7 @@ export function PromptCanvas(props: PromptCanvasProps) {
                     </button>
                   </Tooltip.Trigger>
                   <Tooltip.Portal>
-                    <Tooltip.Content sideOffset={8} style={{ background: '#111827', color: 'white', padding: '6px 8px', borderRadius: 6, fontSize: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}>Copy screenshot (C)<Tooltip.Arrow width={10} height={5} style={{ fill: '#111827' }} /></Tooltip.Content>
+                    <Tooltip.Content sideOffset={8} style={{ background: '#111827', color: 'white', padding: '6px 8px', borderRadius: 6, fontSize: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}>Copy screenshot (⌘C)<Tooltip.Arrow width={10} height={5} style={{ fill: '#111827' }} /></Tooltip.Content>
                   </Tooltip.Portal>
                 </Tooltip.Root>
                 <Tooltip.Root>

@@ -5,7 +5,7 @@
 
 Visual prompts for coding agents directly from your frontend. A React component for annotating changes & sending them to coding agents.
 
-![Prompt Canvas Demo](assets/prompt-canvas-box-demo.gif)
+![Prompt Canvas Demo](assets/prompt-canvas-quick-demo.gif)
 
 ## Quickstart
 
